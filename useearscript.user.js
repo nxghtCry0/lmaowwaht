@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Schoology Plus
 // @namespace    http://tampermonkey.net/
-// @version      1.1
+// @version      1.2
 // @description  The ultimate Schoology enhancement suite. Dark theme, modern UI, and better navigation.
 // @author       TejasGPT
 // @match        *://*.schoology.com/*
@@ -15,14 +15,14 @@
 (function() {
     'use strict';
 
-    // --- CSS INJECTION ---
+    // --- CSS INJECTION (Synced with style.css) ---
     const styles = `
     /* --- 1. CORE VARIABLES (Dark & Clean) --- */
     :root {
         --bg-dark: #121212; --bg-panel: #1e1e1e; --bg-panel-hover: #2c2c2c; --bg-input: #2a2a2a;
         --text-primary: #e4e4e7; --text-secondary: #a1a1aa; --text-link: #a78bfa;
         --accent-primary: #8b5cf6; --border-color: #333333;
-        --radius-lg: 12px; --radius-md: 6px;
+        --radius-lg: 12px; --radius-md: 6px; --radius-round: 50%;
     }
     html, body, #body { background-color: var(--bg-dark) !important; background-image: none !important; color: var(--text-primary) !important; scrollbar-color: var(--bg-panel) var(--bg-dark); }
     div, span, p, h1, h2, h3, h4, h5, h6, a, li, ul, table, td, th { color: inherit; border-color: var(--border-color); }
@@ -33,12 +33,15 @@
     .update-sentence-inner, .update-body, .s-rte, .edge-main-wrapper, .edge-sentence, .story-title { background-color: transparent !important; color: var(--text-primary) !important; }
     .update-sentence-inner a { font-weight: 700 !important; font-size: 1.1em !important; color: #fff !important; }
     input, textarea, select, .form-text, .form-select { background-color: var(--bg-input) !important; border: 1px solid var(--border-color) !important; color: #fff !important; border-radius: var(--radius-md) !important; padding: 8px !important; }
-    button, .button, input[type="submit"] { background: linear-gradient(to bottom, #333, #222) !important; color: #fff !important; border: 1px solid #444 !important; border-radius: var(--radius-md) !important; padding: 6px 12px !important; cursor: pointer; }
+    button, .button, input[type="submit"], .submit-span-wrapper input { background: linear-gradient(to bottom, #333, #222) !important; color: #fff !important; border: 1px solid #444 !important; border-radius: var(--radius-md) !important; padding: 6px 12px !important; cursor: pointer; }
     button:hover, input[type="submit"]:hover { background: var(--accent-primary) !important; border-color: var(--accent-primary) !important; }
     #header, header, ._1Z0RM { background: #0a0a0a !important; border-bottom: 2px solid var(--border-color) !important; box-shadow: 0 4px 20px rgba(0,0,0,0.8) !important; }
     #header nav li button, #header nav li a { background: transparent !important; color: var(--text-primary) !important; }
+    #header nav li:hover { background-color: var(--bg-panel-hover) !important; border-radius: var(--radius-md); }
+    svg, path, use { fill: currentColor !important; }
     div[role="menu"], .dropdown-menu, .popups-box { background-color: var(--bg-panel) !important; border: 1px solid var(--border-color) !important; color: var(--text-primary) !important; }
     .upcoming-event, .recently-completed-list .item, .recently-completed-event { background-color: #252525 !important; border: 1px solid #333 !important; border-left: 3px solid var(--accent-primary) !important; margin-bottom: 8px !important; padding: 10px !important; border-radius: 4px !important; color: var(--text-primary) !important; }
+    .upcoming-event:hover, .recently-completed-event:hover { background-color: var(--bg-panel-hover) !important; }
     /* Custom Course Grid */
     #custom-courses-section h2 { color: #fff !important; border-bottom: 2px solid var(--accent-primary); display: inline-block; padding-bottom: 5px; }
     #custom-course-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
@@ -69,6 +72,20 @@
     footer, footer div, footer span { background-color: var(--bg-dark) !important; color: var(--text-secondary) !important; }
     /* Hide unwanted */
     #edge-filters, button[aria-label="Show Apps"], li[data-sgy-sitenav="calendar"], .notification-settings-wrapper, .smart-box-mid { display: none !important; }
+    /* Tabbed Nav */
+    .sgy-tabbed-navigation li a { background: transparent !important; border: none !important; color: var(--text-secondary) !important; }
+    .sgy-tabbed-navigation li.active a { color: #fff !important; border-bottom: 3px solid var(--accent-primary) !important; background-color: rgba(255,255,255,0.05) !important; }
+    /* Announcements Header */
+    .custom-announcements-header { display: flex; align-items: center; gap: 8px; margin-bottom: 15px; padding: 0; }
+    .custom-announcements-header h2 { color: #fff !important; margin: 0; font-size: 1.4rem; border-bottom: 2px solid var(--accent-primary); padding-bottom: 5px; }
+    .announcements-info-btn { width: 20px; height: 20px; padding: 0 !important; background: var(--bg-panel) !important; border: 1px solid var(--border-color) !important; border-radius: 50% !important; color: var(--text-secondary) !important; font-size: 12px; font-weight: bold; cursor: pointer; position: relative; }
+    .announcements-tooltip { display: none; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); margin-top: 8px; padding: 10px 12px; background: var(--bg-panel); border: 1px solid var(--border-color); border-radius: var(--radius-md); color: var(--text-secondary); font-size: 12px; width: 250px; text-align: left; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+    .announcements-info-btn:hover .announcements-tooltip { display: block; }
+    /* Assignment React Overrides */
+    div[class*="profile-container"], div[class*="profile-header"], div[class*="layout-row-outer"], div[class*="layout-column"] { background: transparent !important; border: none !important; box-shadow: none !important; }
+    div[class*="content-box-container"] { background-color: var(--bg-panel) !important; border: 1px solid var(--border-color) !important; border-radius: var(--radius-lg) !important; padding: 25px !important; }
+    h1[class*="heading1-root"] { color: #fff !important; text-shadow: 0 2px 4px rgba(0,0,0,0.5); }
+    .profile-picture img { border-radius: 50% !important; border: 2px solid var(--border-color) !important; }
     `;
 
     GM_addStyle(styles);
@@ -366,7 +383,7 @@
 
     function replaceLogo() {
         const checkExist = setInterval(() => {
-            const logoWrapper = document.querySelector('[data-sgy-sitenav="custom-header-logo"]');
+            const logoWrapper = document.querySelector('[data-sgy-sitenav="header-logo"]') || document.querySelector('[data-sgy-sitenav="custom-header-logo"]');
             const logo = logoWrapper ? logoWrapper.querySelector('img') : null;
             if (logoWrapper && logo) {
                 clearInterval(checkExist);
