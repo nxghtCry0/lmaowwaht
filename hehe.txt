@@ -1,0 +1,6 @@
+sch+_afilliate1
+sch+_afilliate2
+sch+_afilliate3
+sch+_afilliate4
+sch+_buyer1
+sch+_buyer2
